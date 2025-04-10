@@ -1,12 +1,13 @@
 package com.example.runnerz.run;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Repository
 public class RunRepository {
@@ -48,4 +49,41 @@ public class RunRepository {
         Assert.state(updated == 1, "Failed to delete run: " + id);
     }
 
+    public int count() {
+        return jdbcClient.sql("SELECT COUNT(id) FROM Run").query(Integer.class).single();
+
+    }
+
+    public void saveAll(List<Run> runs) {
+        // Build SQL for a multi-row insert
+        StringBuilder sql = new StringBuilder(
+                "INSERT INTO Run(id, title, started_on, completed_on, miles, location) VALUES ");
+
+        List<Object> allParams = new ArrayList<>();
+        for (int i = 0; i < runs.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?, ?, ?, ?, ?)");
+
+            Run run = runs.get(i);
+            allParams.add(run.id());
+            allParams.add(run.title());
+            allParams.add(run.startedOn());
+            allParams.add(run.completedOn());
+            allParams.add(run.miles());
+            allParams.add(run.location().toString());
+        }
+
+        // Execute the multi-row insert
+        int updated = jdbcClient.sql(sql.toString())
+                .params(allParams)
+                .update();
+
+        // Verify all rows were inserted
+        if (updated != runs.size()) {
+            throw new IllegalStateException("Expected to insert " + runs.size() +
+                    " runs but inserted " + updated);
+        }
+    }
 }
