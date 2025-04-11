@@ -21,11 +21,15 @@ public class JdbcClientRunRepository {
         return jdbcClient.sql("select * from Run").query((Run.class)).list();
     }
 
-    public Optional<Run> findById(Long id) {
-        return jdbcClient.sql("SELECT * FROM Run WHERE id = :id")
+    public Optional<Run> findById(Long id) throws RunNotFoundException {
+        var element = jdbcClient.sql("SELECT * FROM Run WHERE id = :id")
                 .param("id", id)
                 .query(Run.class)
                 .optional();
+        if (element.isEmpty()) {
+            throw new RunNotFoundException();
+        }
+        return element;
     }
 
     public void create(Run run) {
