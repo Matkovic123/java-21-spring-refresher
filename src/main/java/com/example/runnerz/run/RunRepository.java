@@ -15,7 +15,7 @@ public interface RunRepository extends ListCrudRepository<Run, Long> {
 
     void create(Run run);
 
-    void update(Run run, Long id);
+//    void update(Run run, Long id);
 
     void delete(Long id);
 
